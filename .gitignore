@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# Allow specific files
+!Dockerfile
+!docker-compose.yml
+!README.md
+!/nginx/
+!/nginx/default.conf
+!.gitignore

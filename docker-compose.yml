@@ -1,0 +1,92 @@
+services:
+  magentovanilla:
+    container_name: magentovanilla
+    build: .
+    volumes:
+      - ./magento:/var/www/html
+    networks:
+      - magentovanilla-network
+    depends_on:
+      - mariadbvanilla
+      - redisvanilla
+      - rabbitmqvanilla
+      - opensearchvanilla
+    environment:
+      MYSQL_HOST: mariadbvanilla
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento
+      MYSQL_DATABASE: magento
+      OPENSEARCH_HOST: opensearchvanilla
+
+  nginxvanilla:
+    image: nginx:latest
+    volumes:
+      - ./magento:/var/www/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - '8765:80'
+    networks:
+      - magentovanilla-network
+    depends_on:
+      - magentovanilla
+
+  mariadbvanilla:
+    image: mariadb:10.6
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: magento
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento
+    command:
+      [
+        '--max_allowed_packet=64M',
+        '--innodb_buffer_pool_size=512M',
+        '--innodb_ft_cache_size=16M',
+      ]
+    volumes:
+      - mariadbvanilla-data:/var/lib/mysql
+    networks:
+      - magentovanilla-network
+
+  redisvanilla:
+    image: redis:7.0
+    volumes:
+      - redisvanilla-data:/data
+    networks:
+      - magentovanilla-network
+
+  rabbitmqvanilla:
+    image: rabbitmq:3.12-management
+    volumes:
+      - rabbitmqvanilla-data:/var/lib/rabbitmq
+    networks:
+      - magentovanilla-network
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+
+  opensearchvanilla:
+    image: opensearchproject/opensearch:2.12.0
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=M@gent02!
+      - plugins.security.ssl.http.enabled=false
+      - plugins.security.disabled=true
+    ports:
+      - '9200:9200'
+      - '9600:9600'
+    networks:
+      - magentovanilla-network
+    volumes:
+      - opensearchvanilla-data:/usr/share/opensearch/data
+
+volumes:
+  mariadbvanilla-data:
+  opensearchvanilla-data:
+  redisvanilla-data:
+  rabbitmqvanilla-data:
+
+networks:
+  magentovanilla-network:
