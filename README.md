@@ -22,7 +22,7 @@ https://github.com/codecodeio/magento-docker-local-development
 docker-compose build
 ```
 
-\*Any time you change your dockerfile you need to re-run build. Use --no-cache to be sure it rebuilds everything from scratch.
+\*Any time you change your Dockerfile you need to re-run build. Use --no-cache to be sure it rebuilds everything from scratch.
 
 ### Start the Docker Containers
 
@@ -32,7 +32,7 @@ docker-compose up -d
 
 \* -d means detached. Leave this off if you want the terminal to display the container log. This can be useful for debugging but all the logs are also shown in Docker Desktop.
 
-When you need to stop the containrs run:
+When you need to stop the containers run:
 
 ```bash
 docker-compose down
@@ -344,7 +344,7 @@ Change app/etc/env.php to match local settings.
 #### Mariadb
 
 - Change db host to mariadbvanilla.
-- Change the username and password to what was used in the setup:install command, whic was: magento.
+- Change the username and password to what was used in the setup:install command, which was: magento.
 
 #### Redis
 
@@ -353,10 +353,10 @@ Change app/etc/env.php to match local settings.
 
 #### Admin Url
 
-- Take note the admin url is set in app/etc/env.php
+- Take note that the admin url is set in app/etc/env.php
 - ````bash
     'backend' => [
-        'frontName' => 'famoussmokeshop_panel'
+        'frontName' => 'admin'
     ],```
   ````
 
