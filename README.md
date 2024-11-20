@@ -168,9 +168,10 @@ bin/magento setup:install
 # Extra Credit
 
 1. Install Sample Data.
-2. Add auth.json for Magento Enterprise Edition.
-3. Run Multiple Magento Containers.
-4. Import Existing Magento Code and Database.
+2. Install Xdebug
+3. Add auth.json for Magento Enterprise Edition.
+4. Run Multiple Magento Containers.
+5. Import Existing Magento Code and Database.
 
 ## Install Sample Data
 
@@ -180,6 +181,71 @@ Open a shell inside the magento container and run the following commands:
 bin/magento sampledata:deploy
 bin/magento setup:upgrade
 ```
+
+## Install Xdebug
+
+Working with Magento basically requires Xdebug so you can step through the code and see what this large and complex code base is up to. Follow these instruction to install Xdebug and get it working in Visual Studio Code.
+
+### Review The Dockerfile
+
+Xdebug was already installed by the Dockerfile using pecl install. Make sure this is in your Dockerfile after any other pecl installs.
+
+```bash
+# Install xdebug
+RUN pecl install xdebug && docker-php-ext-enable xdebug
+```
+
+Check your Dockerfile for the proper Xdebug setttings. You should see this in your Dockerfile.
+
+```bash
+# Add xdebug settings, "zend_extension=xdebug" is alread set
+RUN echo "xdebug.mode=develop,debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.start_with_request=yes" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.discover_client_host=0" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.client_port=9003" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.log=/tmp/xdebug.log" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+```
+
+### Set up Visual Studio Code for Xdebug
+
+Open your project in VSC.
+
+#### Install the PHP Debug Extension
+
+In VSC navigate to the extensions section and search for PHP Debug or Xdebug. Install the PHP Debug extension made by Xdebug.
+
+#### Set PHP Debug settings
+
+- Navigate to the Run And Debug section of VSC.
+- Click "create a launch.json file" and select PHP from the dropdown choices.
+- Add pathMappings to the configurations section for "name": "Listen for Xdebug".
+  - It should map the magento install on docker "/var/www/html" to the local magento files "${workspaceFolder}/magento" and look like the json below.
+  - This file is located in .vscode/launch.json.
+
+```bash
+"configurations": [
+    {
+      "name": "Listen for Xdebug",
+      "type": "php",
+      "request": "launch",
+      "port": 9003,
+      "pathMappings": {
+        "/var/www/html": "${workspaceFolder}/magento"
+      }
+    },
+    ...
+```
+
+### Run Xdebug
+
+- Navigate to the Run And Debug section of VSC. At the top of this section click the dropdown and make sure "Listen for Xdebug" is selected.
+- Add a breakpoint to pub/index.php
+- Click the green "Start Debugging" arrow that looks like a play button.
+  - If this workis you should see a blue bar at the bottom of VSC and a new icon bar at the top of the screen that has the pause, step over, step into, step out, restart, and stop buttons.
+  - Refresh your website you should see VSC opens and is stopped at your breakpoint. Here you can see the local variables.
+
+🥳 You did it! I don't know about you but that was the easiest time I ever had getting Xdebug to work!
 
 ## Add auth.json for Magento Enterprise Edition
 
