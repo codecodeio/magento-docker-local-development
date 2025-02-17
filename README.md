@@ -279,7 +279,7 @@ The docker containers are all named with "vanilla" as part of the name so you ca
 ### Create a backup of the existing code base
 
 ```bash
-bin/magento support:backup:code
+php bin/magento support:backup:code
 ```
 
 ### Copy the existing code base into the local code base
@@ -316,6 +316,8 @@ CREATE DATABASE magento;
 ### Import the Database
 
 On your local machine run this command:
+
+\*The db user root and password rootpass are settings from docker-compose.yml
 
 ```bash
 docker exec -i <mariadb-container-id> mysql -u root -prootpass magento < path/to/dump.sql
