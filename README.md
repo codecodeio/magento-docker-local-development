@@ -284,7 +284,10 @@ php bin/magento support:backup:code
 
 ### Copy the existing code base into the local code base
 
+\*Be sure to delete any existing code first.
+
 ```bash
+rm -rf ./*
 cp -R path/to/existing/code/* ./magento
 ```
 
@@ -413,6 +416,7 @@ Change app/etc/env.php to match local settings.
 
 - Change db host to mariadbvanilla.
 - Change the username and password to what was used in the setup:install command, which was: magento.
+- Change the dbname to magento.
 
 #### Redis
 
