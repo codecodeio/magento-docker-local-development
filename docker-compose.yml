@@ -4,6 +4,7 @@ services:
     build: .
     volumes:
       - ./magento:/var/www/html
+      - ./bash/.bashrc:/root/.bashrc
     networks:
       - magentovanilla-network
     depends_on:
