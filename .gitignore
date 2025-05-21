@@ -9,5 +9,8 @@
 !/nginx/default.conf
 !/bash/
 !/bash/.bashrc
+!/docker/
+!/docker/php/
+!/docker/php/www.conf
 !.gitignore
 !LICENSE
