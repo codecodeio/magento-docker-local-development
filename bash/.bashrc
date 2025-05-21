@@ -17,18 +17,26 @@ alias magsdc='bin/magento setup:di:compile'
 alias magscd='bin/magento setup:static-content:deploy -f'
 alias magdel='rm -rf var/cache var/page_cache var/view_preprocessed generated/code generated/metadata'
 alias magrestart='composer install && magbuild && magscd'
+alias magut='vendor/bin/phpunit'
+alias magtest='magut app/code && magcs app/code && magcs app/design && magmd app/code && magmd app/design'
 magcs() {
   vendor/bin/phpcs \
     --standard=dev/tests/static/framework/Magento/ruleset.xml \
     --colors \
-    --exclude="Magento2Framework.Header.CopyrightAnotherExtensionsFiles,Magento2Framework.Header.Copyright,Magento2Framework.Header.CopyrightGraphQL,Magento2.Legacy.InstallUpgrade,Magento2.Less.PropertiesSorting,Magento.Less.PropertiesSorting,Magento2.Less.ColonSpacing,Magento.Html.HtmlBinding,Generic.Files.LineLength" \
-    "$1"
+    --exclude="Magento2Framework.Header.CopyrightAnotherExtensionsFiles,Magento2Framework.Header.Copyright,Magento2Framework.Header.CopyrightGraphQL,Magento2.Legacy.InstallUpgrade,Magento2.Less.PropertiesSorting,Magento.Less.PropertiesSorting,Magento2.Less.ColonSpacing,Magento.Html.HtmlBinding" \
+    "$1" \
+    && \
+    vendor/bin/phpmd \
+    "$1" \
+    text \
+    dev/tests/static/testsuite/Magento/Test/Php/_files/phpmd/ruleset.xml \
+    --ignore-violations-on-exit
 }
 magcsf() {
   php vendor/bin/phpcbf \
     --standard=dev/tests/static/framework/Magento/ruleset.xml \
     --colors \
-    --exclude="Magento2Framework.Header.CopyrightAnotherExtensionsFiles,Magento2Framework.Header.Copyright,Magento2Framework.Header.CopyrightGraphQL,Magento2.Legacy.InstallUpgrade,Magento2.Less.PropertiesSorting,Magento.Less.PropertiesSorting,Magento2.Less.ColonSpacing,Magento.Html.HtmlBinding,Generic.Files.LineLength" \
+    --exclude="Magento2Framework.Header.CopyrightAnotherExtensionsFiles,Magento2Framework.Header.Copyright,Magento2Framework.Header.CopyrightGraphQL,Magento2.Legacy.InstallUpgrade,Magento2.Less.PropertiesSorting,Magento.Less.PropertiesSorting,Magento2.Less.ColonSpacing,Magento.Html.HtmlBinding" \
     "$1"
 }
 magmd() {
