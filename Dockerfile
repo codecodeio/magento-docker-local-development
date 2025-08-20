@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     libmagickwand-dev \
     libssl-dev \
-    libpcre3-dev \
+    libpcre2-dev \
     iputils-ping \
     gh \
     --no-install-recommends
