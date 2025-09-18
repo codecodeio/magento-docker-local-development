@@ -7,6 +7,7 @@
 !README.md
 !/nginx/
 !/nginx/default.conf
+!/nginx/nginx.conf.sample.dev
 !/bash/
 !/bash/.bashrc
 !/docker/
