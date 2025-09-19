@@ -299,6 +299,12 @@ cp -R path/to/existing/code/* ./magento
 
 If you need auth.json to exist it was likely just erased. But it back or rename and update auth.json.sample.
 
+### Alternatively Copy Files With Git Clone
+
+- Remove all files from the magento folder
+- Clone your repository into the magento folder
+  - <code>git clone git@github.com:GITHUBACCOUNT/REPOSITORYNAME.git .</code>
+
 ### Dump the existing DB
 
 ssh into the server where your existing code base resides and create a sql dump using this command:
@@ -318,6 +324,12 @@ Drop and recreate the DB:
 ```bash
 DROP DATABASE magento;
 CREATE DATABASE magento;
+```
+
+If the import is coming from a MySQL database it may not be compatible with MariaDB. You can change docker-compose.yml to use MySQL or try to convert the db dump file. Example Error: ERROR 1273 (HY000) at line 78328858: Unknown collation: 'utf8mb4_0900_ai_ci'
+
+```bash
+sed -i '' 's/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g' dump.sql
 ```
 
 ### Import the Database
