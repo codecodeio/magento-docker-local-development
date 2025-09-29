@@ -7,7 +7,9 @@
 !README.md
 !/nginx/
 !/nginx/default.conf
+!/nginx/default.multisite.conf
 !/nginx/nginx.conf.sample.dev
+!/nginx/nginx.conf.sample.multisite.dev
 !/bash/
 !/bash/.bashrc
 !/docker/

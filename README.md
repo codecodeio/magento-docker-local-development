@@ -16,6 +16,21 @@ Navigate to the folder where you want to install Magento.
 
 https://github.com/codecodeio/magento-docker-local-development
 
+### Alternatively Clone the Repository
+
+> You can clone the repo. But you don't want to push commits to it so you can remove the remote.
+
+```bash
+git clone git@github.com:codecodeio/magento-docker-local-development.git FOLDER
+git remote remove origin
+```
+
+> If you want to continue to receive updates from the repo you can set the upstream
+
+```bash
+git remote add upstream git@github.com:codecodeio/magento-docker-local-development.git
+```
+
 ### Run the Build Command
 
 ```bash
@@ -172,8 +187,9 @@ bin/magento setup:install
 3. Add auth.json for Magento Enterprise Edition.
 4. Run Multiple Magento Containers.
 5. Import Existing Magento Code and Database.
+6. Set Up Magento Multisite and Secure URLs.
 
-## Install Sample Data
+# Install Sample Data
 
 Open a shell inside the magento container and run the following commands:
 
@@ -182,7 +198,7 @@ bin/magento sampledata:deploy
 bin/magento setup:upgrade
 ```
 
-## Install Xdebug
+# Install Xdebug
 
 Working with Magento basically requires Xdebug so you can step through the code and see what this large and complex code base is up to. Follow these instruction to install Xdebug and get it working in Visual Studio Code.
 
@@ -251,7 +267,7 @@ In VSC navigate to the extensions section and search for PHP Debug or Xdebug. In
 
 🥳 You did it! I don't know about you but that was the easiest time I ever had getting Xdebug to work!
 
-## Add auth.json for Magento Enterprise Edition
+# Add auth.json for Magento Enterprise Edition
 
 Create the auth.json File: In the ./magento folder on your host machine for any future updates from the enterprise Magento repository.
 
@@ -266,7 +282,7 @@ Create the auth.json File: In the ./magento folder on your host machine for any 
 }
 ```
 
-## Run Multiple Magento Containers
+# Run Multiple Magento Containers
 
 The docker containers are all named with "vanilla" as part of the name so you can easily identify them in Docker Desktop. The volumes are also named so you can associate them with this container and no volumes have been assigned random ids. This way you can easily remove them when not needed. Eventually you will want to create a second magento container which requires changing the 3 items below.
 
@@ -276,9 +292,9 @@ The docker containers are all named with "vanilla" as part of the name so you ca
 2. The nginx/default.conf needs to point to the new FPM container so magentovanilla should change to magentodevelopment.
 3. Finally, the bin/magento setup:install script needs to change the db-host from --db-host="mariadbvanilla" to --db-host="mariadbdevelopment" and opensearch-host from --opensearch-host="opensearchvanilla" to --opensearch-host="opensearchdevelopment"
 
-\*You can only run one container at a time because the ports for nginx, opensearch, and rabbitmq will conflict. You could change all these ports and set environment variables so you can run more than one container at a time but I don't think the complication is worth it.
+\*You can only run one container at a time because the ports for nginx, opensearch, and rabbitmq will conflict. You could change all these ports and set environment variables or use a reverse proxy so you can run more than one container at a time but I don't think the complication is worth it.
 
-## Import Existing Magento Code and Database
+# Import Existing Magento Code and Database
 
 ### Create a backup of the existing code base
 
@@ -291,7 +307,8 @@ php bin/magento support:backup:code
 \*Be sure to delete any existing code first.
 
 ```bash
-rm -rf ./*
+rm -rf ./magento/*
+# then delete any remaining files starting with .
 cp -R path/to/existing/code/* ./magento
 ```
 
@@ -457,4 +474,106 @@ bin/magento indexer:reindex
 bin/magento cache:clean
 bin/magento cache:flush
 bin/magento setup:upgrade
+```
+
+# Set Up Magento Multisite and Secure URLs
+
+Some magento sites serve up more than one website. Follow these instructions to make your site work with a local url instead of localhost. Also set up Magento to serve up secure https urls.
+
+### Set Up default.conf
+
+Copy default.multisite.conf into default.conf. You will see these differences:
+
+- $MAGE_RUN_CODE and $MAGE_RUN_TYPE
+  - This helps magento know which site to execute.
+- Additional server {} nodes that listen for each url.
+- Additional server {} nodes that listen for each secure https urls.
+
+### Set Up nginx.conf.sample.dev
+
+Copy nginx.conf.sample.multisite.dev into nginx.conf.sample.dev. You will see references to $MAGE_RUN_CODE and $MAGE_RUN_TYPE added to default.conf in the prior step.
+
+### Set up hosts file
+
+Your local machine needs to know that the sites we are setting up should load using localhost. The hosts file is located here on Mac: <code>/etc/hosts</code>
+
+Add this to your hosts file. Alter the names to match the site urls in your magento installation. If you don't have multiple sites, add them using the magento admin and place those urls in your hosts file.
+
+```bash
+# Magento sites
+
+127.0.0.1 magentovanilla.site1.test
+127.0.0.1 magentovanilla.site2.test
+```
+
+### Create SSL Certificates
+
+Use mkcert to create SSL Certificates. This creates creates DOMAIN.NAME.pem and DOMAIN.NAME-key.pem. Place these files inside your nginx folder or just navigate there and then create them.
+
+```bash
+brew install mkcert
+#mkcert DOMAIN.NAME
+mkcert magentovanilla.site1.test
+mkcert magentovanilla.site2.test
+```
+
+### Set Up docker-composer.yml
+
+Tell docker-compose to copy your new SSL certs into the nginx docker container. Copy docker-composer-multisite.yml into docker-composer.yml. You will see that mappings to your local SSL certs will be copied into the nginx container. You will also see that the secure port 443 is exposed.
+
+### Update site URLs in core_config_data
+
+#### Update SQL
+
+```bash
+UPDATE core_config_data
+SET value = CASE
+   -- default scope site1 (scope_id = 0, default)
+   WHEN path = 'web/unsecure/base_url' AND scope = 'default' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   WHEN path = 'web/secure/base_url' AND scope = 'default' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   WHEN path = 'web/unsecure/base_link_url' AND scope = 'default' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   WHEN path = 'web/secure/base_link_url' AND scope = 'default' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   -- stores scope site1 (scope_id = 0, stores)
+   WHEN path = 'web/unsecure/base_url' AND scope = 'stores' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   WHEN path = 'web/secure/base_url' AND scope = 'stores' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   WHEN path = 'web/unsecure/base_link_url' AND scope = 'stores' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   WHEN path = 'web/secure/base_link_url' AND scope = 'stores' AND scope_id = 0 THEN 'https://magentovanilla.site1.test/'
+   -- websites scope site2 (scope_id = 2, websites)
+   WHEN path = 'web/unsecure/base_url' AND scope = 'websites' AND scope_id = 2 THEN 'https://magentovanilla.site2.test/'
+   WHEN path = 'web/secure/base_url' AND scope = 'websites' AND scope_id = 2 THEN 'https://magentovanilla.site2.test/'
+   WHEN path = 'web/unsecure/base_link_url' AND scope = 'websites' AND scope_id = 2 THEN 'https://magentovanilla.site2.test/'
+   WHEN path = 'web/secure/base_link_url' AND scope = 'websites' AND scope_id = 2 THEN 'https://magentovanilla.site2.test/'
+   ELSE value
+END
+WHERE path IN (
+   'web/unsecure/base_url',
+   'web/secure/base_url',
+   'web/unsecure/base_link_url',
+   'web/secure/base_link_url'
+);
+```
+
+#### Select SQL
+
+Check the result of the update. Make sure nothing uses localhost any more.
+
+```bash
+SELECT *
+FROM core_config_data
+WHERE path IN (
+    'catalog/search/opensearch_server_hostname',
+    'catalog/search/opensearch_server_port',
+    'web/unsecure/base_url',
+    'web/secure/base_url',
+    'web/unsecure/base_link_url',
+    'web/secure/base_link_url',
+    'admin/url/use_custom',
+    'system/full_page_cache/caching_application',
+    'web/secure/use_in_frontend',
+    'web/secure/use_in_adminhtml',
+    'web/secure/offloader_header',
+    'web/cookie/cookie_domain',
+    'web/cookie/cookie_httponly'
+)
+order by scope_id, scope;
 ```
